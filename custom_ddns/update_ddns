@@ -1,0 +1,35 @@
+#!/bin/sh
+
+#some settings
+DOMAIN=baan.2realities.com
+DNS_SERVER=srv.2realities.com
+DNS_KEY=""
+STATE_FILE="/var/tmp/ddns_ip"
+
+
+
+#checking for our public ip
+ip=$(curl -s -f http://automation.whatismyip.com/n09230945.asp)
+
+if [ -z "$ip" ]; then
+	#TODO to stderr
+	echo "Can't get the public IP, no Internet connection?"
+	exit 1
+fi
+
+if [ -f $STATE_FILE ]; then
+	old_ip=`cat $STATE_FILE`
+else
+	old_ip=""
+fi
+
+#ip has changed, update!
+if [ "$old_ip" != "$ip" ]; then
+	#TODO nsupdate!
+	echo "updating"
+	logger -t custom_ddns -- $DOMAIN updated to $ip
+	#writing our ip to state file
+	echo "$ip">$STATE_FILE
+fi
+
+echo $ip
