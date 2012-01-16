@@ -1,4 +1,8 @@
 #!/bin/sh
+# Custom DDNS update script
+# Licensed under BSD License: http://www.opensource.org/licenses/BSD-2-Clause
+# Artem Sidorenko http://2realities.com
+
 
 #some settings
 DNS_RECORD=yourhost.yourdomain.com
