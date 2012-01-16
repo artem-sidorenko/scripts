@@ -1,19 +1,23 @@
 #!/bin/sh
 
 #some settings
-DOMAIN=baan.2realities.com
-DNS_SERVER=srv.2realities.com
-DNS_KEY=""
-STATE_FILE="/var/tmp/ddns_ip"
+DNS_RECORD=yourhost.yourdomain.com
+DNS_SERVER=yourdnsserver.com
+DNS_ZONE=yourdomain.com
+DNS_KEY_FILE="Kyourhostfile.private"
+DNS_TTL="60"
+STATE_FILE="/var/tmp/custom_ddns_last_ip"
+#IP_DETECT_URL="http://checkip.dyndns.org/"
+IP_DETECT_URL="http://automation.whatismyip.com/n09230945.asp"
+PRE_UPDATE_CMD=""
 
 
 
 #checking for our public ip
-ip=$(curl -s -f http://automation.whatismyip.com/n09230945.asp)
+ip=`curl -4 -s -f $IP_DETECT_URL | grep -o "[[:digit:].]\+"`
 
 if [ -z "$ip" ]; then
-	#TODO to stderr
-	echo "Can't get the public IP, no Internet connection?"
+	echo "Can't get the public IP, no Internet connection?" >&2
 	exit 1
 fi
 
@@ -25,11 +29,23 @@ fi
 
 #ip has changed, update!
 if [ "$old_ip" != "$ip" ]; then
-	#TODO nsupdate!
-	echo "updating"
-	logger -t custom_ddns -- $DOMAIN updated to $ip
-	#writing our ip to state file
-	echo "$ip">$STATE_FILE
+	#some preupdate commands?
+	$PRE_UPDATE_CMD
+	#running dns update
+	nsupdate -k $DNS_KEY_FILE <<EOF
+	server $DNS_SERVER
+	zone $DNS_ZONE
+	update delete $DNS_RECORD
+	update add $DNS_RECORD $DNS_TTL A $ip
+	send
+EOF
+	#checking nsupdate exit status
+	if [ $? -ne 0 ]; then
+		echo "DNS update failed! Wrong configuration?" >&2
+		exit 1
+	else
+		logger -t custom_ddns -- $DOMAIN updated to $ip
+		#writing our ip to state file
+		echo "$ip">$STATE_FILE
+	fi
 fi
-
-echo $ip
