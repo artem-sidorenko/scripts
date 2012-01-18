@@ -1,0 +1,70 @@
+#!/bin/sh
+# Script for remote backups
+# More information at http://www.2realities.com/howtos/linux/remote_backup_with_dump
+# Licensed under BSD License: http://www.opensource.org/licenses/BSD-2-Clause
+# Author: Artem Sidorenko http://2realities.com
+
+#some settings
+BACKUP_FILE_SYSTEMS="/var/log /boot"
+BACKUP_PRE_CMD=""
+BACKUP_SOURCE_HOST="your_host"
+BACKUP_SOURCE_USER="backup"
+TARGET_FOLDER="backup"
+DATE_FORMAT="%H-%M-%S_%a_%d.%m.%Y"
+USE_SUDO=1
+
+#checking args
+if [ -z "$1" -o "$1" = "--help" -o -z "$2" ]; then
+	echo -e "\tUsage: remote_dump DUMP_LEVEL RETENTION"
+	echo
+	echo -e "\tDUMP_LEVEL - level of dump to create"
+	echo -e "\tRETENTION - count of old dumps to keep"
+	exit 1
+fi
+
+#input
+dump_level=$1
+retention=$2
+if [ $USE_SUDO -eq 1 ]; then
+	sudo="sudo"
+else
+	sudo=""
+fi
+
+#foreach over file systems
+for i in $BACKUP_FILE_SYSTEMS; do
+	$BACKUP_PRE_CMD
+
+	#translating slashes
+	backup_fs=`echo $i | tr -d /`
+	#our root fs
+	if [ -z "$backup_fs" ]; then
+		backup_fs="root"
+	fi
+
+	#creating symlink names and removing old symlinks
+        symlink=$TARGET_FOLDER/${BACKUP_SOURCE_HOST}_${backup_fs}_level_${dump_level}_latest.dump.gz
+        symlink_log=$TARGET_FOLDER/${BACKUP_SOURCE_HOST}_${backup_fs}_level_${dump_level}_latest.log
+        unlink $symlink 2>/dev/null
+        unlink $symlink_log 2>/dev/null
+
+	#cleaning old, retention
+	old_backups=`ls -t $TARGET_FOLDER/${BACKUP_SOURCE_HOST}_${backup_fs}_level_${dump_level}_*.dump.gz 2>/dev/null`
+	counter=0
+	for b in $old_backups; do
+		((counter++))
+		if [[ $counter -le $retention ]]; then
+			continue
+		else
+			rm $TARGET_FOLDER/`basename $b .dump.gz`*
+		fi
+	done
+
+	backupname=${BACKUP_SOURCE_HOST}_${backup_fs}_level_${dump_level}_$(date "+$DATE_FORMAT").dump.gz
+	log_name=${BACKUP_SOURCE_HOST}_${backup_fs}_level_${dump_level}_$(date "+$DATE_FORMAT").log
+	ssh $BACKUP_SOURCE_USER@$BACKUP_SOURCE_HOST "$sudo dump -$dump_level -au -f - $i | gzip -2" 2>>$TARGET_FOLDER/$log_name | dd of=$TARGET_FOLDER/$backupname 2>>$TARGET_FOLDER/$log_name
+
+	#setting new symlink
+	ln -s $backupname $symlink
+	ln -s $log_name $symlink_log
+done
