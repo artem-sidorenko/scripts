@@ -1,7 +1,8 @@
 #!/bin/sh
 # Custom DDNS update script
+# More information at: http://www.2realities.com/howtos/linux/custom_dynamic_dns
 # Licensed under BSD License: http://www.opensource.org/licenses/BSD-2-Clause
-# Artem Sidorenko http://2realities.com
+# Author: Artem Sidorenko http://2realities.com
 
 
 #some settings
@@ -48,7 +49,7 @@ EOF
 		echo "DNS update failed! Wrong configuration?" >&2
 		exit 1
 	else
-		logger -t custom_ddns -- $DOMAIN updated to $ip
+		logger -t custom_ddns -- $DNS_RECORD updated to $ip
 		#writing our ip to state file
 		echo "$ip">$STATE_FILE
 	fi
