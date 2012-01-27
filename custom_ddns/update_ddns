@@ -40,7 +40,7 @@ if [ "$old_ip" != "$ip" ]; then
 	nsupdate -k $DNS_KEY_FILE <<EOF
 	server $DNS_SERVER
 	zone $DNS_ZONE
-	update delete $DNS_RECORD
+	update delete $DNS_RECORD A
 	update add $DNS_RECORD $DNS_TTL A $ip
 	send
 EOF
