@@ -6,7 +6,7 @@
 
 
 #some settings
-DNS_RECORD=yourhost.yourdomain.com
+DNS_RECORDS="yourhost.yourdomain.com"
 DNS_SERVER=yourdnsserver.com
 DNS_ZONE=yourdomain.com
 DNS_KEY_FILE="Kyourhostfile.private"
@@ -36,20 +36,21 @@ fi
 if [ "$old_ip" != "$ip" ]; then
 	#some preupdate commands?
 	$PRE_UPDATE_CMD
+	#creating nsupdate commands
+	commands="server $DNS_SERVER\nzone $DNS_ZONE\n"
+	for i in $DNS_RECORDS; do
+		commands="$commands\nupdate delete $i A\nupdate add $i $DNS_TTL A ${ip}\n"
+	done
+	commands="$commands\nsend\n"
 	#running dns update
-	nsupdate -k $DNS_KEY_FILE <<EOF
-	server $DNS_SERVER
-	zone $DNS_ZONE
-	update delete $DNS_RECORD A
-	update add $DNS_RECORD $DNS_TTL A $ip
-	send
-EOF
+	echo -e "$commands" | nsupdate -k $DNS_KEY_FILE
+	nsupdate_status=$?
 	#checking nsupdate exit status
-	if [ $? -ne 0 ]; then
+	if [ $nsupdate_status -ne 0 ]; then
 		echo "DNS update failed! Wrong configuration?" >&2
 		exit 1
 	else
-		logger -t custom_ddns -- $DNS_RECORD updated to $ip
+		logger -t custom_ddns -- $DNS_RECORDS updated to $ip
 		#writing our ip to state file
 		echo "$ip">$STATE_FILE
 	fi
