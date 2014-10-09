@@ -1,0 +1,22 @@
+#namespace name
+NS="vpn"
+
+#veth interface name to use in the namespace
+NS_VETH="veth1"
+#veth interface to use in the host env
+HOST_VETH="veth0"
+
+#bridge in the OS to brigde first veth to
+HOST_BRIDGE="br0"
+
+#ip to configure inside namespace
+NS_IP="192.168.179.13/24"
+
+#gateway to use for routes in NS_ROUTES
+NS_ROUTES_GW="192.168.179.1"
+
+#routes to route via NS_ROUTES_GW, space separated
+NS_ROUTES="91.211.117.229/32 192.168.0.0/16"
+
+#init.d scripts to start/stop in the namespace, space separated
+NS_SERVICES="openvpn.udp-proxy.sh"
