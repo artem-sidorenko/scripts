@@ -2,28 +2,48 @@
 # Copyright 1999-2007 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+NS=${SVCNAME#*.}
+
 depend() {
 	need localmount net
 	use dns
 	after bootmisc
 }
 
+checkscript () {
+	if [ -z "${NS}" ] || [ ${SVCNAME} == "net-namespace" ]; then
+		eerror "Namespace init script can be involved only via a symlink"
+		return 1
+	fi
+}
+
 start() {
+	checkscript || return 1
+
 	ebegin "Configuring $NS namespace"
 	ip netns add $NS
 	ip link add $HOST_VETH type veth peer name $NS_VETH
 	ip link set $NS_VETH netns $NS
 	brctl addif $HOST_BRIDGE $HOST_VETH
+	#load iptables
+	if [ -n "${NS_IPTABLES}" ]; then
+		ip netns exec $NS iptables-restore < $NS_IPTABLES
+	fi
+	#ip config
 	ifconfig $HOST_VETH up
 	ip netns exec $NS ifconfig $NS_VETH up
 	ip netns exec $NS ifconfig lo up
 	ip netns exec $NS ip addr add $NS_IP dev $NS_VETH
-	#forwarding
-	ip netns exec $NS sysctl net.ipv4.ip_forward=1
+	#routing and forwarding
+	if [[ $NS_FORWARD =~ ^([yY][eE][sS]|[yY])$ ]]; then
+		ip netns exec $NS sysctl -q net.ipv4.ip_forward=1
+	fi
 	for route in $NS_ROUTES; do
 		ip netns exec $NS ip route add $route via $NS_ROUTES_GW
 	done
+	#namespace configured
 	eend 0
+	#start services inside of it
 	for service in $NS_SERVICES; do
 		ip netns exec $NS /etc/init.d/$service start
         done
@@ -31,6 +51,8 @@ start() {
 }
 
 stop() {
+	checkscript || return 1
+
 	for service in $NS_SERVICES; do
 		ip netns exec $NS /etc/init.d/$service stop
 	done
