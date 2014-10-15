@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# dispatcher.d script for networkmanager
+# Autologin on the Hotspots of Deutsche Telekom
+#
+# Author Artem Sidorenko artem@2realities.com
+#
+# Copyright 2014 Artem Sidorenko and contributors.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+USERNAME=""
+PASSWORD=""
+
+INTERFACE="wlan0"
+ACTION="up"
+
+#check for right interface and action
+if [ "$INTERFACE" != "$1" ]  || [ "$ACTION" != "$2" ]; then
+  exit 0
+fi
+
+#Check for SSID
+current_ssid=`/sbin/iwconfig 2>/dev/null | grep -oP '(?<=ESSID:").+(?=")'`
+case "${current_ssid}" in
+  Telekom)
+    portal_url="https://hotspot.t-mobile.net/wlan/index.do?username=${USERNAME}&password=${PASSWORD}&strHinweis=Zahlungsbedingungen&strAGB=AGB"
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+wget --output-document=/dev/null "${portal_url}"
