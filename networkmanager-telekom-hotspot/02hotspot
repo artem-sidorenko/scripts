@@ -17,6 +17,9 @@ PASSWORD=""
 INTERFACE="wlan0"
 ACTION="up"
 
+VPN="no"
+VPNNAME=""
+
 #check for right interface and action
 if [ "$INTERFACE" != "$1" ]  || [ "$ACTION" != "$2" ]; then
   exit 0
@@ -34,3 +37,8 @@ case "${current_ssid}" in
 esac
 
 wget --output-document=/dev/null "${portal_url}"
+
+#bring up VPN if required
+if [ "$VPN" = "yes" ]; then
+  sh -c "sleep 2 && nmcli c up id '$VPNNAME'" 2>/dev/null &
+fi
