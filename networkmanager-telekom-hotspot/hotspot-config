@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Configuration for Telekom Hotspot dispatcher.d script for networkmanager
+#
+# Author Artem Sidorenko artem@2realities.com
+#
+# Copyright 2014 Artem Sidorenko and contributors.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+# http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+# Your username and password for Hotspot
+# Username is usually something like 49123456789@t-mobile.de
+USERNAME=""
+PASSWORD=""
+
+# Set your interface if it's not wlan0
+#INTERFACE="wlan0"
+
+# Set if you want to bring up VPN automaticaly. 
+# VPNNAME is the connection name in NetworkManager.
+# VPNDELAY is the time to wait after hotspot auth before to bring up vpn
+#
+# This overlay VPN won't work if you try to do it on the "right" way,
+# as NM will try to bring up VPN before hotspot auth is done
+# So we use a workaround via delay and nmcli startup of this connection
+# You will have to do some magic within VPN profile if you have any
+# password there, see README for details
+#
+#VPN="no"
+#VPNNAME="" 
+#VPNDELAY="5"

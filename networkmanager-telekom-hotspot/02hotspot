@@ -11,14 +11,19 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 # Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
+#defaults
 USERNAME=""
 PASSWORD=""
-
 INTERFACE="wlan0"
 ACTION="up"
-
 VPN="no"
 VPNNAME=""
+VPNDELAY="5"
+
+conf_file="/etc/NetworkManager/hotspot-config"
+
+#load conf
+. $conf_file
 
 #check for right interface and action
 if [ "$INTERFACE" != "$1" ]  || [ "$ACTION" != "$2" ]; then
@@ -40,5 +45,5 @@ wget --output-document=/dev/null "${portal_url}"
 
 #bring up VPN if required
 if [ "$VPN" = "yes" ]; then
-  sh -c "sleep 2 && nmcli c up id '$VPNNAME'" 2>/dev/null &
+  sh -c "sleep $VPNDELAY && nmcli c up id '$VPNNAME'" 2>/dev/null &
 fi
